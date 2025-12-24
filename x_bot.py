@@ -136,14 +136,15 @@ class XBot:
         print(f"X Bot Running - {datetime.now().strftime('%Y-%m-%d %H:%M:%S')}")
         print(f"{'='*60}\n")
         
-        # Fetch tweets
-        print("Fetching tweets from timeline...")
-        timeline_tweets = self.get_timeline_tweets()
-        
-        # print("Searching for trending tweets...")
-        # trending_tweets = self.search_trending_tweets()
-        
-        all_tweets = timeline_tweets
+       # Fetch tweets
+   print("Fetching tweets from timeline...")
+   timeline_tweets = self.get_timeline_tweets()
+   
+   # Disabled search to avoid API errors
+   # print("Searching for trending tweets...")
+   # trending_tweets = self.search_trending_tweets()
+   
+   all_tweets = timeline_tweets
         print(f"Total tweets found: {len(all_tweets)}\n")
         
         # Process tweets
