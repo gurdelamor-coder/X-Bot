@@ -2,9 +2,12 @@ name: X Bot - Auto Repost & Like
 
 on:
   schedule:
-    # Run every 30 minutes (safer rate limiting)
-    - cron: '*/30 * * * *'
+    - cron: '*/15 * * * *'
   workflow_dispatch:
+
+# IMPORTANT: Add permissions
+permissions:
+  contents: write
 
 jobs:
   run-bot:
@@ -35,8 +38,6 @@ jobs:
         pip install -r requirements.txt
         
     - name: Run X Bot
-      id: bot-run
-      continue-on-error: true
       env:
         X_BEARER_TOKEN: ${{ secrets.X_BEARER_TOKEN }}
         X_API_KEY: ${{ secrets.X_API_KEY }}
@@ -44,41 +45,17 @@ jobs:
         X_ACCESS_TOKEN: ${{ secrets.X_ACCESS_TOKEN }}
         X_ACCESS_SECRET: ${{ secrets.X_ACCESS_SECRET }}
       run: |
-        python x_bot.py 2>&1 | tee bot_run.log
-        echo "status=$?" >> $GITHUB_OUTPUT
-        
-    - name: Upload logs
-      if: always()
-      uses: actions/upload-artifact@v4
-      with:
-        name: bot-logs-${{ github.run_number }}
-        path: bot_run.log
-        retention-days: 7
+        python x_bot.py
         
     - name: Commit processed tweets
-      if: success() || steps.bot-run.outcome == 'success'
       run: |
         git config --local user.email "github-actions[bot]@users.noreply.github.com"
         git config --local user.name "github-actions[bot]"
         git add processed_tweets.json || true
         
         if ! git diff --quiet HEAD -- processed_tweets.json 2>/dev/null; then
-          git commit -m "📝 Update processed tweets [skip ci]"
-          for i in {1..3}; do
-            if git push; then
-              echo "Successfully pushed changes"
-              break
-            else
-              echo "Push failed, attempt $i of 3"
-              sleep 5
-              git pull --rebase
-            fi
-          done
+          git commit -m "Update processed tweets [skip ci]"
+          git push
         else
           echo "No changes to commit"
         fi
-        
-    - name: Report failure
-      if: failure()
-      run: |
-        echo "::warning::Bot run failed. Check logs for details."
