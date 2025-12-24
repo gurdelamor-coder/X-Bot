@@ -75,7 +75,7 @@ class XBot:
         """Search for trending tweets (alternative method)"""
         try:
             # Search recent tweets with high engagement
-            query = "-is:retweet -is:reply has:media"
+            query = "python OR javascript OR coding -is:retweet -is:reply"
             tweets = self.client_v2.search_recent_tweets(
                 query=query,
                 max_results=100,
