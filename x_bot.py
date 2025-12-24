@@ -140,10 +140,10 @@ class XBot:
         print("Fetching tweets from timeline...")
         timeline_tweets = self.get_timeline_tweets()
         
-        print("Searching for trending tweets...")
-        trending_tweets = self.search_trending_tweets()
+        # print("Searching for trending tweets...")
+        # trending_tweets = self.search_trending_tweets()
         
-        all_tweets = timeline_tweets + trending_tweets
+        all_tweets = timeline_tweets
         print(f"Total tweets found: {len(all_tweets)}\n")
         
         # Process tweets
