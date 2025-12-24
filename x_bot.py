@@ -72,21 +72,22 @@ class XBot:
             return []
     
     def search_trending_tweets(self):
-        """Search for trending tweets (alternative method)"""
-        try:
-            # Search recent tweets with high engagement
-            query = "python OR javascript OR coding -is:retweet -is:reply"
-            tweets = self.client_v2.search_recent_tweets(
-                query=query,
-                max_results=100,
-                tweet_fields=['public_metrics', 'created_at', 'author_id'],
-                sort_order='relevancy'
-            )
-            
-            return tweets.data if tweets.data else []
-        except Exception as e:
-            print(f"Error searching tweets: {e}")
-            return []
+    """Search for trending tweets (alternative method)"""
+    try:
+        # Search for viral tweets with simple query
+        # X API Free tier only supports basic queries
+        query = "min_faves:5000"  # Tweets with at least 5000 likes
+        
+        tweets = self.client_v2.search_recent_tweets(
+            query=query,
+            max_results=10,  # Reduced to stay within rate limits
+            tweet_fields=['public_metrics', 'created_at', 'author_id']
+        )
+        
+        return tweets.data if tweets.data else []
+    except Exception as e:
+        print(f"Error searching tweets: {e}")
+        return []
     
     def meets_criteria(self, tweet):
         """Check if tweet meets engagement criteria"""
@@ -136,15 +137,11 @@ class XBot:
         print(f"X Bot Running - {datetime.now().strftime('%Y-%m-%d %H:%M:%S')}")
         print(f"{'='*60}\n")
         
-       # Fetch tweets
-   print("Fetching tweets from timeline...")
-   timeline_tweets = self.get_timeline_tweets()
-   
-   # Disabled search to avoid API errors
-   # print("Searching for trending tweets...")
-   # trending_tweets = self.search_trending_tweets()
-   
-   all_tweets = timeline_tweets
+       # Fetch tweets - Skip timeline since not following anyone
+print("Searching for viral tweets...")
+trending_tweets = self.search_trending_tweets()
+
+all_tweets = trending_tweets
         print(f"Total tweets found: {len(all_tweets)}\n")
         
         # Process tweets
