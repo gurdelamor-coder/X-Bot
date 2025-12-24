@@ -8,7 +8,9 @@ import json
 from datetime import datetime
 import time
 
-MIN_LIKES = 5000
+# Adjusted thresholds for more activity
+MIN_LIKES_FOR_REPOST = 1000  # Lower threshold for reposting
+MIN_LIKES_FOR_LIKE = 50      # Even lower threshold for just liking
 
 class XBot:
     def __init__(self):
@@ -114,15 +116,27 @@ class XBot:
             print(f"Search error: {e}")
             return []
     
-    def meets_criteria(self, tweet):
-        """Check if tweet has enough engagement"""
+    def should_like(self, tweet):
+        """Check if tweet should be liked"""
         try:
             metrics = tweet.public_metrics
             likes = metrics.get('like_count', 0)
             retweets = metrics.get('retweet_count', 0)
             
-            # Lower threshold for verified followers
-            return likes >= MIN_LIKES or (likes >= 100 and retweets >= 10)
+            # Like if it has decent engagement
+            return likes >= MIN_LIKES_FOR_LIKE or retweets >= 10
+        except:
+            return False
+    
+    def should_repost(self, tweet):
+        """Check if tweet should be reposted (higher threshold)"""
+        try:
+            metrics = tweet.public_metrics
+            likes = metrics.get('like_count', 0)
+            retweets = metrics.get('retweet_count', 0)
+            
+            # Repost if it has significant engagement
+            return likes >= MIN_LIKES_FOR_REPOST or (likes >= 500 and retweets >= 50)
         except:
             return False
     
@@ -132,10 +146,10 @@ class XBot:
             me = self.client_v2.get_me()
             user_id = me.data.id
             self.client_v2.retweet(tweet_id, user_id=user_id)
-            print(f"✓ Reposted: {tweet_id}")
+            print(f"  ✓ Reposted: {tweet_id}")
             return True
         except Exception as e:
-            print(f"✗ Repost failed: {e}")
+            print(f"  ✗ Repost failed: {e}")
             return False
     
     def like_tweet(self, tweet_id):
@@ -144,10 +158,10 @@ class XBot:
             me = self.client_v2.get_me()
             user_id = me.data.id
             self.client_v2.like(tweet_id, user_id=user_id)
-            print(f"✓ Liked: {tweet_id}")
+            print(f"  ✓ Liked: {tweet_id}")
             return True
         except Exception as e:
-            print(f"✗ Like failed: {e}")
+            print(f"  ✗ Like failed: {e}")
             return False
     
     def run(self):
@@ -165,10 +179,10 @@ class XBot:
             search_tweets = self.search_tweets()
             tweets.extend(search_tweets)
         
-        print(f"Total tweets found: {len(tweets)}")
+        print(f"Total tweets found: {len(tweets)}\n")
         
         actions = 0
-        max_actions = 5  # Limit actions per run to avoid rate limits
+        max_actions = 10  # Increased limit for more activity
         
         for tweet in tweets:
             if actions >= max_actions:
@@ -181,22 +195,28 @@ class XBot:
             if str(tweet_id) in self.processed_tweets:
                 continue
             
-            # Check if meets criteria
-            if self.meets_criteria(tweet):
-                print(f"\nProcessing tweet {tweet_id}:")
-                print(f"  Likes: {tweet.public_metrics.get('like_count', 0)}")
-                print(f"  Retweets: {tweet.public_metrics.get('retweet_count', 0)}")
+            # Get metrics
+            metrics = tweet.public_metrics
+            likes = metrics.get('like_count', 0)
+            retweets = metrics.get('retweet_count', 0)
+            
+            # Check if meets any criteria
+            should_like = self.should_like(tweet)
+            should_repost = self.should_repost(tweet)
+            
+            if should_like or should_repost:
+                print(f"Processing tweet {tweet_id}:")
+                print(f"  Likes: {likes}, Retweets: {retweets}")
                 
                 # Like the tweet
-                if self.like_tweet(tweet_id):
+                if should_like and self.like_tweet(tweet_id):
                     actions += 1
                     time.sleep(2)  # Rate limit protection
                 
                 # Repost if highly engaged
-                if tweet.public_metrics.get('like_count', 0) >= MIN_LIKES:
-                    if self.repost_tweet(tweet_id):
-                        actions += 1
-                        time.sleep(2)
+                if should_repost and self.repost_tweet(tweet_id):
+                    actions += 1
+                    time.sleep(2)
                 
                 # Mark as processed
                 self.processed_tweets.add(str(tweet_id))
@@ -204,6 +224,7 @@ class XBot:
         
         print(f"\n{'='*60}")
         print(f"Bot completed: {actions} actions taken")
+        print(f"Processed tweets total: {len(self.processed_tweets)}")
         print(f"{'='*60}\n")
 
 if __name__ == "__main__":
