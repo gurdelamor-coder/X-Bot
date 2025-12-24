@@ -2,10 +2,12 @@ name: X Bot - Auto Repost & Like
 
 on:
   schedule:
+    # Run every 15 minutes
     - cron: '*/15 * * * *'
+  # Allow manual triggering
   workflow_dispatch:
 
-# IMPORTANT: Add permissions
+# IMPORTANT: Add permissions to allow pushing commits
 permissions:
   contents: write
 
@@ -53,8 +55,9 @@ jobs:
         git config --local user.name "github-actions[bot]"
         git add processed_tweets.json || true
         
+        # Only commit if there are changes
         if ! git diff --quiet HEAD -- processed_tweets.json 2>/dev/null; then
-          git commit -m "Update processed tweets [skip ci]"
+          git commit -m "📝 Update processed tweets [skip ci]"
           git push
         else
           echo "No changes to commit"
