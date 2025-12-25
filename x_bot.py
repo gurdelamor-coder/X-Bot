@@ -9,7 +9,7 @@ from datetime import datetime
 import time
 
 # Adjusted thresholds for more activity
-MIN_LIKES_FOR_REPOST = 1000  # Lower threshold for reposting
+MIN_LIKES_FOR_REPOST = 50  # Lower threshold for reposting
 MIN_LIKES_FOR_LIKE = 50      # Even lower threshold for just liking
 
 class XBot:
